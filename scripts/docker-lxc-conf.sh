@@ -16,12 +16,12 @@ TEMP_FILE="/tmp/docker_container_info.md"
 # Generate the Markdown table inside the LXC container
 pct exec "$LXC_ID" -- bash -c "
 IP=\$(hostname -I | awk '{print \$1}')
-echo -e '| Container Name | HTTP Address |' > $TEMP_FILE
-echo -e '|----------------|--------------|' >> $TEMP_FILE
+echo -e '# | Container Name | HTTP Address |' > $TEMP_FILE
+echo -e '# |----------------|--------------|' >> $TEMP_FILE
 for container_id in \$(docker ps -q); do
     container_name=\$(docker inspect --format '{{.Name}}' \"\$container_id\" | sed 's/^.\{1\}//')
     http_addresses=\$(docker port \"\$container_id\" | awk -v ip=\"\$IP\" '{print \"http://\"ip\":\"\$3}' | tr '\n' ', ' | sed 's/, \$//')
-    echo -e \"| \$container_name | \$http_addresses |\" >> $TEMP_FILE
+    echo -e \"# | \$container_name | \$http_addresses |\" >> $TEMP_FILE
 done
 "
 
