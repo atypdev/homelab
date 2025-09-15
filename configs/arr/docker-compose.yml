@@ -1,0 +1,209 @@
+name: compose
+services:
+  # Jellyfin: play downloaded media; like Netflix!
+  jellyfin:
+    container_name: jellyfin
+    environment:
+      PGID: "1215"
+      PUID: "1002"
+      TZ: Etc/UTC
+    hostname: Jellyfin
+    image: lscr.io/linuxserver/jellyfin:latest
+    networks:
+      default: null
+    ports:
+      # Web server url -> https://x.x.x.x:8096
+      - mode: ingress
+        target: 8096
+        published: "8099"
+        protocol: tcp
+      - mode: ingress
+        target: 8920
+        published: "8920"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: ${LOCAL_STORAGE}
+        target: /storage
+        bind:
+          create_host_path: true
+      # Get host's local time.
+      - type: bind
+        source: /etc/localtime
+        target: /etc/localtime
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ~/.config/appdata/jellyfin
+        target: /config
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /tmp/jellyfin_transcode
+        target: /transcode
+        bind:
+          create_host_path: true
+  # Movies
+  radarr:
+    container_name: radarr
+    environment:
+      PGID: "1215"
+      PUID: "1002"
+      TZ: Etc/UTC
+    hostname: Radarr
+    image: lscr.io/linuxserver/radarr:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 7878
+        published: "7878"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: ${LOCAL_STORAGE}
+        target: /storage
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /etc/localtime
+        target: /etc/localtime
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ~/atyp/.config/appdata/radarr
+        target: /config
+        bind:
+          create_host_path: true
+
+  # TV Shows
+  sonarr:
+    container_name: sonarr
+    environment:
+      PGID: "1215"
+      PUID: "1002"
+      TZ: Etc/UTC
+    hostname: Sonarr
+    image: lscr.io/linuxserver/sonarr:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8989
+        published: "8989"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: ${LOCAL_STORAGE}
+        target: /storage
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /etc/localtime
+        target: /etc/localtime
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ~/.config/appdata/sonarr
+        target: /config
+        bind:
+          create_host_path: true
+  qbittorrentvpn:
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    container_name: qbittorrentvpn
+    environment:
+      ENABLE_PRIVOXY: "no"
+      LAN_NETWORK: 10.0.0.0/24
+      NAME_SERVERS: 1.1.1.1,8.8.8.8
+      PGID: "1215"
+      PUID: "1002"
+      TZ: Etc/UTC
+      VPN_CLIENT: wireguard
+      VPN_ENABLED: "yes"
+      WEBUI_PORT: "8080"
+    hostname: qBittorrentVPN
+    image: ghcr.io/binhex/arch-qbittorrentvpn:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 6881
+        published: "6881"
+        protocol: tcp
+      - mode: ingress
+        target: 6881
+        published: "6881"
+        protocol: udp
+      - mode: ingress
+        target: 8080
+        published: "8080"
+        protocol: tcp
+      - mode: ingress
+        target: 8118
+        published: "8118"
+        protocol: tcp
+    privileged: true
+    restart: unless-stopped
+    sysctls:
+      net.ipv4.conf.all.src_valid_mark: "1"
+    volumes:
+      - type: bind
+        source: /mnt/data
+        target: ${LOCAL_STORAGE}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /etc/localtime
+        target: /etc/localtime
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ~/.config/appdata/qbittorrentvpn
+        target: /config
+        bind:
+          create_host_path: true
+  prowlarr:
+    container_name: prowlarr
+    environment:
+      PGID: "1215"
+      PUID: "1002"
+      TZ: Etc/UTC
+    hostname: Prowlarr
+    image: lscr.io/linuxserver/prowlarr:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 9696
+        published: "9696"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /mnt/data
+        target: /storage
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /etc/localtime
+        target: /etc/localtime
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ~/.config/appdata/prowlarr
+        target: /config
+        bind:
+          create_host_path: true
+networks:
+  default:
+    name: compose_default
